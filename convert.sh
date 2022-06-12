@@ -8,17 +8,17 @@ OUT_FILE="../converted/$1"
 
 echo "Processing $IN_FILE..."
 
-IFS=', ' read w h <<< $(ffprobe -hide_banner -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "$IN_FILE" 2>&1)
+IFS=', ' read w h <<< $(ffprobe -hide_banner -v fatal -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "$IN_FILE" 2>&1)
 echo "Original: ${w}x${h}"
 
 LONGEST=$w
 [[ $h -gt $LONGEST ]] && LONGEST=$h
 
-FORMAT=png
+FORMAT=''
 LOOP=''
 if ffprobe -hide_banner "$IN_FILE" 2>&1 | grep apng > /dev/null; then
     echo "Sticker is animated"
-    FORMAT=apng
+    FORMAT='-f apng'
     LOOP='-plays 0'
 fi
 
@@ -34,4 +34,4 @@ PAD_WIDTH=$(echo "($LONGEST_PADDED-$w)/2" | bc)
 PAD_HEIGHT=$(echo "($LONGEST_PADDED-$h)/2" | bc)
 echo "Pad: ${PAD_WIDTH}x${PAD_HEIGHT}"
 
-ffmpeg -v error -i "$IN_FILE" $LOOP -vf "scale=${LONGEST_PADDED}x${LONGEST_PADDED}:force_original_aspect_ratio=decrease,format=rgba,pad=${LONGEST_PADDED}:${LONGEST_PADDED}:-${PAD_WIDTH}:-${PAD_HEIGHT}:color=#00000000" -f $FORMAT "$OUT_FILE"
+ffmpeg -v error -i "$IN_FILE" $LOOP -vf "scale=${LONGEST_PADDED}x${LONGEST_PADDED}:force_original_aspect_ratio=decrease,format=rgba,pad=${LONGEST_PADDED}:${LONGEST_PADDED}:-${PAD_WIDTH}:-${PAD_HEIGHT}:color=#00000000" $FORMAT "$OUT_FILE"
